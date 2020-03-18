@@ -14,33 +14,45 @@ func main() {
 		log.Fatal(err)
 	}
 	opsStr := strings.Split(strings.TrimSpace(string(b)), ",")
-	var ops []int
+	var ops0 []int
 	for _, opStr := range opsStr {
 		op, err := strconv.Atoi(opStr)
 		if err != nil {
 			log.Fatalf("Failed to parse op %q: %v", opStr, err)
 		}
-		ops = append(ops, op)
+		ops0 = append(ops0, op)
 	}
 
-	ops[1], ops[2] = 12, 2
+	for n := 0; n <= 99; n++ {
+		for v := 0; v <= 99; v++ {
+			var ops []int
+			for _, op := range ops0 {
+				ops = append(ops, op)
+			}
 
-	for i := 0; i < len(ops); i += 4 {
-		op := ops[i]
-		if op == 99 {
-			break
-		}
+			ops[1], ops[2] = n, v
 
-		op1, op2, resIdx := ops[ops[i+1]], ops[ops[i+2]], ops[i+3]
-		switch op {
-		case 1:
-			ops[resIdx] = op1 + op2
-		case 2:
-			ops[resIdx] = op1 * op2
-		default:
-			log.Fatalf("Invalid op: %d", op)
+			for i := 0; i < len(ops); i += 4 {
+				op := ops[i]
+				if op == 99 {
+					break
+				}
+
+				op1, op2, resIdx := ops[ops[i+1]], ops[ops[i+2]], ops[i+3]
+				switch op {
+				case 1:
+					ops[resIdx] = op1 + op2
+				case 2:
+					ops[resIdx] = op1 * op2
+				default:
+					log.Fatalf("Invalid op: %d", op)
+				}
+			}
+
+			if ops[0] == 19690720 {
+				log.Printf("Result: %v", 100*n+v)
+				break
+			}
 		}
 	}
-
-	log.Printf("Result: %v", ops[0])
 }
