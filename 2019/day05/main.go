@@ -23,8 +23,6 @@ func main() {
 		ops = append(ops, op)
 	}
 
-	// ops[1], ops[2] = 12, 2
-
 	for i := 0; i < len(ops); {
 		modeop := ops[i]
 		if modeop == 99 {
@@ -62,14 +60,42 @@ func main() {
 			i += 4
 		case 3:
 			resIdx := ops[i+1]
-			ops[resIdx] = 1
+			ops[resIdx] = 5
 			i += 2
 		case 4:
 			op := opVal(ops[i+1], 1)
-			if op != 0 {
-				log.Printf("Result: %v", op)
-			}
+			log.Printf("Result: %v", op)
 			i += 2
+		case 5:
+			op1, op2 := opVal(ops[i+1], 1), opVal(ops[i+2], 2)
+			if op1 != 0 {
+				i = op2
+			} else {
+				i += 3
+			}
+		case 6:
+			op1, op2 := opVal(ops[i+1], 1), opVal(ops[i+2], 2)
+			if op1 == 0 {
+				i = op2
+			} else {
+				i += 3
+			}
+		case 7:
+			op1, op2, resIdx := opVal(ops[i+1], 1), opVal(ops[i+2], 2), ops[i+3]
+			if op1 < op2 {
+				ops[resIdx] = 1
+			} else {
+				ops[resIdx] = 0
+			}
+			i += 4
+		case 8:
+			op1, op2, resIdx := opVal(ops[i+1], 1), opVal(ops[i+2], 2), ops[i+3]
+			if op1 == op2 {
+				ops[resIdx] = 1
+			} else {
+				ops[resIdx] = 0
+			}
+			i += 4
 		default:
 			log.Fatalf("Invalid op: %d", op)
 		}
