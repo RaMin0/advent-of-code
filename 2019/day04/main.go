@@ -26,12 +26,21 @@ func main() {
 	checks := []func(string) bool{
 		func(n string) bool { return len(n) == 6 },
 		func(n string) bool {
+			matches := map[string]int{}
 			for i := 1; i < len(n); i++ {
 				c0, c := n[i-1:i], n[i:i+1]
 				if c == c0 {
-					return true
+					if _, ok := matches[c]; !ok {
+						matches[c] = 1
+					}
+					matches[c]++
 				}
 				c0 = c
+			}
+			for _, cnt := range matches {
+				if cnt == 2 {
+					return true
+				}
 			}
 			return false
 		},
