@@ -39,26 +39,31 @@ func main() {
 		return
 	}
 
-	coords := map[[2]int]map[int]bool{}
+	coords := map[[2]int]map[int]int{}
 	for i, steps := range allSteps {
-		var x, y int
+		var x, y, s int
 		for _, step := range steps {
 			delta := move(&x, &y, step.dir, step.num)
 			for _, coord := range delta {
+				s++
 				if _, ok := coords[coord]; !ok {
-					coords[coord] = map[int]bool{}
+					coords[coord] = map[int]int{}
 				}
-				coords[coord][i] = true
+				coords[coord][i] = s
 			}
 		}
 	}
 
 	var coordDists []int
-	for coord, n := range coords {
-		if len(n) <= 1 {
+	for _, lines := range coords {
+		if len(lines) <= 1 {
 			continue
 		}
-		coordDists = append(coordDists, dist(coord))
+		var sumSteps int
+		for _, steps := range lines {
+			sumSteps += steps
+		}
+		coordDists = append(coordDists, sumSteps)
 	}
 
 	sort.Ints(coordDists)
