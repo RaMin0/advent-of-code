@@ -38,13 +38,30 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var sum int
-	for _, n := range nodes {
-		cn := *n
-		for cn.up != nil {
-			sum++
-			cn = *cn.up
+	you := path(nodes["YOU"])[1:]
+	san := path(nodes["SAN"])[1:]
+
+	for y := 0; y < len(you); y++ {
+		for s := 0; s < len(san); s++ {
+			if you[y] == san[s] {
+				ypath := you[:y]
+				spath := san[:s]
+				log.Printf("Result: %v", len(ypath)+len(spath))
+				return
+			}
 		}
 	}
-	log.Printf("Result: %v", sum)
+}
+
+func path(n *node) []*node {
+	ns := []*node{}
+	cn := n
+	for {
+		ns = append(ns, cn)
+		if cn.up == nil {
+			break
+		}
+		cn = cn.up
+	}
+	return ns
 }
