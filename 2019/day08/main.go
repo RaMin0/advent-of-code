@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 )
 
@@ -14,34 +14,34 @@ func main() {
 		log.Fatal(err)
 	}
 
-	area := 25 * 6
-	minZeros, minZerosIdx := math.MaxInt64, -1
+	w, h := 25, 6
+	area := w * h
 	var layers []string
 	for c := 0; c < len(bytes.TrimSpace(b)); {
 		var l string
-		var zeros int
-		for i := 1; i <= area; i++ {
-			if b[c] == '0' {
-				zeros++
-			}
+		for i := 1; i <= area; i, c = i+1, c+1 {
 			l += string(b[c])
-			c++
-		}
-		if zeros < minZeros {
-			minZeros = zeros
-			minZerosIdx = len(layers)
 		}
 		layers = append(layers, l)
 	}
 
-	var ones, twos int
-	for _, c := range layers[minZerosIdx] {
-		if c == '1' {
-			ones++
-		}
-		if c == '2' {
-			twos++
+	image := []byte(layers[0])
+	for i := 0; i < len(image); i++ {
+		for l := 1; l < len(layers); l++ {
+			if image[i] == '2' {
+				image[i] = layers[l][i]
+			}
 		}
 	}
-	log.Printf("Result: %v", ones*twos)
+
+	for i, p := range image {
+		if i > 0 && i%w == 0 {
+			fmt.Println()
+		}
+		if p == '0' {
+			p = ' '
+		}
+		fmt.Print(string(p))
+	}
+	fmt.Println()
 }
