@@ -145,7 +145,7 @@ func main() {
 		ops = append(ops, op)
 	}
 
-	c := computer{ops: ops, ins: []int{1}}
+	c := computer{ops: ops, ins: []int{2}}
 	if err := c.compute(); err != nil && err != errHalt {
 		log.Fatalf("Failed to compute: %v", err)
 	}
