@@ -9,15 +9,18 @@ import (
 	"strings"
 )
 
+var errHalt = fmt.Errorf("halt")
+
 type computer struct {
 	ops, ins, outs []int
+	pc             int
 }
 
 func (c *computer) compute() error {
-	for i := 0; i < len(c.ops); {
-		modeop := c.ops[i]
+	for {
+		modeop := c.ops[c.pc]
 		if modeop == 99 {
-			break
+			return errHalt
 		}
 
 		modeInt, op := modeop/100, modeop%100
@@ -42,57 +45,57 @@ func (c *computer) compute() error {
 
 		switch op {
 		case 1:
-			op1, op2, resIdx := opVal(c.ops[i+1], 1), opVal(c.ops[i+2], 2), c.ops[i+3]
+			op1, op2, resIdx := opVal(c.ops[c.pc+1], 1), opVal(c.ops[c.pc+2], 2), c.ops[c.pc+3]
 			c.ops[resIdx] = op1 + op2
-			i += 4
+			c.pc += 4
 		case 2:
-			op1, op2, resIdx := opVal(c.ops[i+1], 1), opVal(c.ops[i+2], 2), c.ops[i+3]
+			op1, op2, resIdx := opVal(c.ops[c.pc+1], 1), opVal(c.ops[c.pc+2], 2), c.ops[c.pc+3]
 			c.ops[resIdx] = op1 * op2
-			i += 4
+			c.pc += 4
 		case 3:
-			resIdx := c.ops[i+1]
+			resIdx := c.ops[c.pc+1]
 			c.ops[resIdx] = c.ins[0]
 			c.ins = c.ins[1:]
-			i += 2
+			c.pc += 2
 		case 4:
-			op := opVal(c.ops[i+1], 1)
+			op := opVal(c.ops[c.pc+1], 1)
 			c.outs = append([]int{op}, c.outs...)
-			i += 2
+			c.pc += 2
+			return nil
 		case 5:
-			op1, op2 := opVal(c.ops[i+1], 1), opVal(c.ops[i+2], 2)
+			op1, op2 := opVal(c.ops[c.pc+1], 1), opVal(c.ops[c.pc+2], 2)
 			if op1 != 0 {
-				i = op2
+				c.pc = op2
 			} else {
-				i += 3
+				c.pc += 3
 			}
 		case 6:
-			op1, op2 := opVal(c.ops[i+1], 1), opVal(c.ops[i+2], 2)
+			op1, op2 := opVal(c.ops[c.pc+1], 1), opVal(c.ops[c.pc+2], 2)
 			if op1 == 0 {
-				i = op2
+				c.pc = op2
 			} else {
-				i += 3
+				c.pc += 3
 			}
 		case 7:
-			op1, op2, resIdx := opVal(c.ops[i+1], 1), opVal(c.ops[i+2], 2), c.ops[i+3]
+			op1, op2, resIdx := opVal(c.ops[c.pc+1], 1), opVal(c.ops[c.pc+2], 2), c.ops[c.pc+3]
 			if op1 < op2 {
 				c.ops[resIdx] = 1
 			} else {
 				c.ops[resIdx] = 0
 			}
-			i += 4
+			c.pc += 4
 		case 8:
-			op1, op2, resIdx := opVal(c.ops[i+1], 1), opVal(c.ops[i+2], 2), c.ops[i+3]
+			op1, op2, resIdx := opVal(c.ops[c.pc+1], 1), opVal(c.ops[c.pc+2], 2), c.ops[c.pc+3]
 			if op1 == op2 {
 				c.ops[resIdx] = 1
 			} else {
 				c.ops[resIdx] = 0
 			}
-			i += 4
+			c.pc += 4
 		default:
 			return fmt.Errorf("invalid op: %d", op)
 		}
 	}
-	return nil
 }
 
 func main() {
@@ -111,15 +114,34 @@ func main() {
 	}
 
 	var max int
-	for _, cseq := range perm([]int{0, 1, 2, 3, 4}) {
-		lastIn := 0
-		for _, in := range cseq {
-			c := computer{ops: make([]int, len(ops)), ins: []int{in, lastIn}}
+	for _, cseq := range perm([]int{5, 6, 7, 8, 9}) {
+		computers := make([]*computer, len(cseq))
+		for i, in := range cseq {
+			c := computer{ops: make([]int, len(ops)), ins: []int{in}}
 			copy(c.ops, ops)
-			if err := c.compute(); err != nil {
-				log.Fatalf("Failed to compute: %v", err)
+			computers[i] = &c
+		}
+
+		halted := map[*computer]bool{}
+		lastIn := 0
+		for {
+			for _, c := range computers {
+				if halted[c] {
+					continue
+				}
+				c.ins = append(c.ins, lastIn)
+				if err := c.compute(); err != nil {
+					if err == errHalt {
+						halted[c] = true
+					} else {
+						log.Fatalf("Failed to compute: %v", err)
+					}
+				}
+				lastIn = c.outs[0]
 			}
-			lastIn = c.outs[0]
+			if len(halted) == len(cseq) {
+				break
+			}
 		}
 		if lastIn > max {
 			max = lastIn
