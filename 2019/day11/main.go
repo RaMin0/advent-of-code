@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -151,7 +152,7 @@ func main() {
 	}
 
 	pos, dir := p{0, 0}, p{0, 1}
-	grid := map[p]int{}
+	grid := map[p]int{pos: 1}
 	turn := func(d int) {
 		if d == 1 {
 			switch dir {
@@ -195,5 +196,31 @@ func main() {
 		turn(c.outs[0])
 		move()
 	}
-	log.Printf("Result: %v", len(grid))
+
+	minx, maxx, miny, maxy := math.MaxInt64, -math.MaxInt64, math.MaxInt64, -math.MaxInt64
+	for c := range grid {
+		if c.x < minx {
+			minx = c.x
+		}
+		if c.x > maxx {
+			maxx = c.x
+		}
+		if c.y < miny {
+			miny = c.y
+		}
+		if c.y > maxy {
+			maxy = c.y
+		}
+	}
+
+	for y := maxy; y >= miny; y-- {
+		for x := minx; x <= maxx; x++ {
+			if grid[p{x, y}] == 1 {
+				fmt.Print("#")
+				continue
+			}
+			fmt.Print(".")
+		}
+		fmt.Println()
+	}
 }
