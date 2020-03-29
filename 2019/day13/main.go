@@ -82,6 +82,9 @@ func (c *computer) compute() error {
 			c.write(resIdx, op1*op2)
 			c.pc += 4
 		case 3:
+			if len(c.ins) == 0 {
+				return nil
+			}
 			resIdx := res(c.ops[c.pc+1], 1)
 			c.write(resIdx, c.ins[0])
 			c.ins = c.ins[1:]
@@ -130,6 +133,8 @@ func (c *computer) compute() error {
 	}
 }
 
+type p struct{ x, y int }
+
 func main() {
 	b, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -145,17 +150,88 @@ func main() {
 		ops = append(ops, op)
 	}
 
+	ops[0] = 2
+
 	c := computer{ops: ops}
-	if err := c.compute(); err != nil && err != errHalt {
-		log.Fatalf("Failed to compute: %v", err)
+
+	var score, paddlex, ballx int
+	grid := map[p]int{}
+	for {
+		err := c.compute()
+		if err != nil && err != errHalt {
+			log.Fatalf("Failed to compute: %v", err)
+		}
+
+		for i := 0; i < len(c.outs); i += 3 {
+			t, y, x := c.outs[i], c.outs[i+1], c.outs[i+2]
+			if x == -1 {
+				score = t
+				continue
+			}
+
+			grid[p{x, y}] = t
+
+			switch t {
+			case 3:
+				paddlex = x
+			case 4:
+				ballx = x
+			}
+		}
+		c.outs = nil
+
+		// draw(grid)
+		// fmt.Printf("Score: %v\n\n", score)
+
+		if err == errHalt {
+			break
+		}
+
+		// time.Sleep(50 * time.Millisecond)
+
+		var in int
+		switch {
+		case paddlex < ballx:
+			in = 1
+		case paddlex > ballx:
+			in = -1
+		}
+		c.ins = append(c.ins, in)
 	}
 
-	var t int
-	for i := 0; i < len(c.outs); i += 3 {
-		if c.outs[i] != 2 {
-			continue
+	log.Printf("Result: %v", score)
+}
+
+func draw(grid map[p]int) {
+	maxx, maxy := -1, -1
+	for c := range grid {
+		if c.x > maxx {
+			maxx = c.x
 		}
-		t++
+		if c.y > maxy {
+			maxy = c.y
+		}
 	}
-	log.Printf("Result: %v", t)
+
+	var sb strings.Builder
+	for y := 0; y <= maxy; y++ {
+		for x := 0; x <= maxx; x++ {
+			switch t := grid[p{x, y}]; t {
+			case 0:
+				fmt.Fprint(&sb, " ")
+			case 1:
+				fmt.Fprint(&sb, "#")
+			case 2:
+				fmt.Fprint(&sb, "x")
+			case 3:
+				fmt.Fprint(&sb, "\"")
+			case 4:
+				fmt.Fprint(&sb, "o")
+			default:
+				log.Fatalf("invalid tile: %d", t)
+			}
+		}
+		fmt.Fprintln(&sb)
+	}
+	fmt.Println(sb.String())
 }
