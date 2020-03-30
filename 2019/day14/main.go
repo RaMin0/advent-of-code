@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -43,13 +44,13 @@ func ParseRule(raw string) Rule {
 	return Rule{inputs, output}
 }
 
-func LeastOre(rules []Rule) int {
+func LeastOre(rules []Rule, fuelRequired int) int {
 	rulesByChemical := map[string]Rule{}
 	for _, r := range rules {
 		rulesByChemical[r.Output.Chemical] = r
 	}
 
-	requirements := map[string]int{"FUEL": 1}
+	requirements := map[string]int{"FUEL": fuelRequired}
 	var oreNeeded int
 
 	done := func() bool {
@@ -88,6 +89,12 @@ func LeastOre(rules []Rule) int {
 	return oreNeeded
 }
 
+func MaxFuel(rules []Rule, maxOre int) int {
+	return sort.Search(maxOre, func(i int) bool {
+		return LeastOre(rules, i) > maxOre
+	}) - 1
+}
+
 func main() {
 	var rules []Rule
 	sc := bufio.NewScanner(os.Stdin)
@@ -97,5 +104,5 @@ func main() {
 	if err := sc.Err(); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Result: %v", LeastOre(rules))
+	log.Printf("Result: %v", MaxFuel(rules, 1_000_000_000_000))
 }
